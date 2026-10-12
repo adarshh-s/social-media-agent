@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Secrets — never commit. Copy server/.env.example to server/.env instead.
+.env
+.env.*
+!.env.example
+
+# Local database, uploads, render temp files
+server/data/
+data/
+
+# Build output
+dist/
+
+# OS / editor
+.DS_Store
+*.log

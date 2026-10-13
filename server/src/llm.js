@@ -104,7 +104,7 @@ async function geminiCall(request) {
 }
 
 function friendlyGeminiError(err) {
-  if (/API key not valid|API_KEY_INVALID/i.test(String(err?.message))) {
+  if (err?.status === 401 || /API key not valid|API_KEY_INVALID|UNAUTHENTICATED|invalid authentication/i.test(String(err?.message))) {
     return Object.assign(new Error('Your GEMINI_API_KEY is invalid. Copy it again from aistudio.google.com/apikey.'), { status: 500 });
   }
   if (isQuotaError(err)) {

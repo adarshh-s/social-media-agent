@@ -86,14 +86,39 @@ Instagram accounts, brand voice, posts, plans and media, and can only see their 
 
 ## Launching publicly
 
-### Deploy
-```bash
-npm run setup && npm run build   # builds client/dist, which the API server then serves
-npm start                        # one process: API + web app + scheduler
+### Deploy (free): Vercel frontend + Oracle Cloud backend
+
 ```
-Set `SERVER_URL` and `CLIENT_URL` to the same https domain, and leave `PUBLIC_MEDIA_URL` empty.
-Run one instance on a host with a persistent disk (Render, Railway, Fly.io, a VPS) because
-`server/data/` holds the SQLite database and uploaded media. Back that folder up.
+Browser → Vercel (React app) → /api, /uploads forwarded → Oracle VM: Caddy (HTTPS) → Postpilot API
+```
+Everything is reached through the Vercel domain, so cookies, OAuth callbacks and Instagram media URLs all use one https address.
+
+**1. Oracle Cloud server (Always Free)**
+1. Sign up at oracle.com/cloud/free (needs a card for identity verification; Always Free resources aren't charged). Pick a home region near you.
+2. Compute → Instances → Create instance:
+   - Image: **Canonical Ubuntu 24.04** · Shape: **Ampere VM.Standard.A1.Flex**, 2 OCPU / 12 GB (Always Free eligible).
+   - Add your SSH public key (`cat ~/.ssh/id_ed25519.pub`, or let Oracle generate one and download it).
+   - If you get "Out of capacity", try another availability domain or retry later.
+3. Open the web ports: Instance → Subnet → Default security list → **Add ingress rules** for TCP **80** and **443**, source `0.0.0.0/0`.
+4. Note the instance's **public IP**.
+
+**2. Free domain with HTTPS**: at duckdns.org, sign in, create a subdomain (e.g. `postpilot-api`) and set it to the server's public IP.
+
+**3. Install on the server**
+```bash
+ssh ubuntu@<public-ip>
+git clone https://github.com/adarshh-s/social-media-agent.git && cd social-media-agent
+bash deploy/setup.sh postpilot-api.duckdns.org   # creates server/.env with a fresh encryption key
+nano server/.env      # add API keys; SERVER_URL and CLIENT_URL = https://<your-app>.vercel.app
+cd deploy && sudo docker compose up -d --build
+```
+Check: `https://postpilot-api.duckdns.org/api/auth/me` returns `{"error":"Not logged in"}`.
+Update later with `git pull && cd deploy && sudo docker compose up -d --build`.
+
+**4. Vercel**: set the DuckDNS domain in `vercel.json` (replace `BACKEND_DOMAIN`), then `vercel deploy --prod`.
+Use `https://<your-app>.vercel.app/api/accounts/linkedin/callback` (and `/instagram/callback`) as the OAuth redirect URLs.
+
+**Without Docker** (any server with Node 22.13+ and ffmpeg): `npm run setup && npm run build && npm start` serves the API and the web app from one process.
 
 ### LinkedIn: works for everyone right away
 "Sign In with LinkedIn" and "Share on LinkedIn" are self-serve, so any LinkedIn member can connect

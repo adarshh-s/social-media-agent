@@ -1,0 +1,13 @@
+{$DOMAIN} {
+	encode gzip
+	# Uploads (videos) can be large; AI requests can take up to ~2 minutes.
+	request_body {
+		max_size 250MB
+	}
+	reverse_proxy app:4000 {
+		transport http {
+			read_timeout 5m
+			write_timeout 5m
+		}
+	}
+}

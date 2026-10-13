@@ -161,9 +161,13 @@ export const VOICES = {
 let ttsPromise;
 function loadTTS() {
   // ~90 MB model, downloaded from Hugging Face on first use and cached afterwards.
-  ttsPromise ??= import('kokoro-js').then(({ KokoroTTS }) =>
-    KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: 'q8', device: 'cpu' })
-  );
+  ttsPromise ??= (async () => {
+    // Keep the model on the data disk so container rebuilds don't re-download it.
+    const { env } = await import('@huggingface/transformers');
+    env.cacheDir = path.join(DATA_DIR, 'models');
+    const { KokoroTTS } = await import('kokoro-js');
+    return KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype: 'q8', device: 'cpu' });
+  })();
   return ttsPromise;
 }
 

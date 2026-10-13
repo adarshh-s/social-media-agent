@@ -1,0 +1,35 @@
+# Runs on the server:  cd deploy && docker compose up -d --build
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file: ../server/.env
+    environment:
+      DATA_DIR: /app/server/data
+      # Vercel → Caddy → app
+      TRUST_PROXY: 2
+    volumes:
+      - ./data:/app/server/data
+    expose:
+      - "4000"
+
+  # Free automatic HTTPS (Let's Encrypt) for your DuckDNS domain.
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in deploy/.env, e.g. postpilot-api.duckdns.org}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,9 @@
+# Only the frontend is deployed to Vercel. Never upload the server (it holds .env and the database).
+/*
+!client
+!shared
+!vercel.json
+client/node_modules
+client/dist
+**/.env
+**/.env.*

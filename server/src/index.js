@@ -17,7 +17,8 @@ process.env.CLIENT_URL ||= 'http://localhost:5173';
 encrypt('startup check'); // fail fast if TOKEN_ENCRYPTION_KEY is missing or invalid
 
 const app = express();
-app.set('trust proxy', 1); // correct req.ip / https behind a load balancer
+// Number of proxies in front of the app (Vercel → Caddy → app = 2), so req.ip is the real visitor.
+app.set('trust proxy', Number(process.env.TRUST_PROXY || 1));
 app.disable('x-powered-by');
 app.use(express.json({ limit: '200kb' }));
 app.use(loadUser);

@@ -1,0 +1,10 @@
+**/node_modules
+**/.env
+**/.env.*
+!**/.env.example
+server/data
+deploy/data
+client
+**/dist
+.git
+**/.DS_Store
